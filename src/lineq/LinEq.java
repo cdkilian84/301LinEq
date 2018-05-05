@@ -1,8 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+//Christopher Kilian
+//CS 301 - Spring 2018
+//Programming project 1 - Solving systems of linear equations
+
 package lineq;
 
 import java.io.BufferedReader;
@@ -11,12 +10,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-/**
- *
- * @author Chris
- */
+//All methods and the user menu are implemented in this one class - "main" method handles user interface, and operations such as
+//file reading or gaussian elimination are handled in helper methods.
 public class LinEq {
-
+ 
     //the arrays being used for solving a system of linear equations
     //made globally accessible here for ease of access
     private static int[] outsideIndex;
@@ -24,6 +21,8 @@ public class LinEq {
     private static double[] rhs;
     
     public static void main(String[] args) {
+        //commented out code chunk used for testing the algorithm independent of the command line UI
+        //included here for completeness
 //        int n = 3;
 //        int[] outsideIndex = new int[n];
 //        double[][] myCoefficients = {{2, 4, -2}, {1, 3, 4}, {5, 2, 0}};
@@ -42,6 +41,7 @@ public class LinEq {
             System.exit(0);
         }
         
+        //main menu loop
         while(true){
             String numEquations;
             int numEq;
@@ -68,7 +68,9 @@ public class LinEq {
                 break; //break outer loop and end program
             }
             
-            System.out.println("Before proceeding, tell me how many linear equations you are attempting to solve:");
+            System.out.println("Before proceeding, tell me how many linear equations you are attempting to solve. Note that you must input the correct "
+                    + "number being solved to get the correct solution!");
+            System.out.println("Enter now:");
             //loop on getting an appropriate value for "n"
             while(true){
                 numEquations = console.readLine();
@@ -121,12 +123,14 @@ public class LinEq {
     }
     
 
-    
+    //handler for the case where the user wants to input the coefficient values of their
+    //equations from a provided text file rather than manually. Returns a boolean representing whether the
+    //file was successfully read in or not.
     public static boolean handleFileInput(int numEquations){
         Console console = System.console();
         boolean fileReadSuccessfully = true;
         String fileName;
-        System.out.println("\nWhen entering a file name, please ensure you enter the full file path!");
+        System.out.println("\nWhen entering a file name, please ensure you enter the full file path, or that the file is in your current working directory!");
         System.out.println("Please enter the name of the file now:");
         
         
@@ -169,7 +173,6 @@ public class LinEq {
     }
     
     
-    
     //handler for the case where the user wants to input the coefficient values of their
     //equations manually rather than reading in from a file
     public static void handleManualInput(int numEquations){
@@ -208,6 +211,9 @@ public class LinEq {
         }
     }
     
+    
+    //Method to check input and ensure that the values are numeric - positive or negative numbers are allowed, as are
+    //number with or without decimal values. Any non-numeric value will return false.
     //return true if the input is valid
     public static boolean checkInput(String[] userInput){
         boolean goodInputFlag = true;
@@ -226,6 +232,8 @@ public class LinEq {
     }
         
     
+    //Method which performs gaussian elimination with partial pivoting - implemented version of pseudocode found in
+    //Numerical Mathematics and Computing, chapter 2 section 2
     //note that "coefficients" must be n x n
     public static void gauss(int n, double[][] coefficients, int[] index){
         try{
@@ -265,32 +273,40 @@ public class LinEq {
                     }
                 }
             }
-        }catch(Exception x){
-            System.out.println("There was an error processing the matrix!");
+        }catch(Exception x){ //catch errors including divide by zero or matrix errors (mostly here "just in case")
+            System.out.println("There was an error processing the matrix! Problem in Gaussian Elimination phase!");
             System.out.println("Cause: " + x.getCause());
             System.out.println(x.fillInStackTrace());
         }
     }
     
+    
+    //Method which works to perform the back substitution on a matrix which has been processed through the 
+    //Gaussian elimination phase already - the returned solution array will only be correct if Gaussian elimination is done first.
+    //Implemented version of pseudocode found in Numerical Mathematics and Computing, chapter 2 section 2
     public static double[] solve(int n, double[][] coefficients, int[] index, double[] eqRHS){
         double[] solutions = new double[n];
-        
-        for(int k = 0; k < (n-1); k++){
-            for(int i = k+1; i < n; i++){
-                eqRHS[index[i]] = eqRHS[index[i]] - (coefficients[index[i]][k] * eqRHS[index[k]]);
+        try{
+            for(int k = 0; k < (n-1); k++){
+                for(int i = k+1; i < n; i++){
+                    eqRHS[index[i]] = eqRHS[index[i]] - (coefficients[index[i]][k] * eqRHS[index[k]]);
+                }
             }
-        }
-        
-        solutions[(n-1)] = eqRHS[index[(n-1)]]/coefficients[index[(n-1)]][(n-1)];
-        
-        for(int i = (n-2); i >= 0; i--){
-            double sum = eqRHS[index[i]];
-            for(int j = i+1; j < n; j++){
-                sum = sum - coefficients[index[i]][j] * solutions[j];
+
+            solutions[(n-1)] = eqRHS[index[(n-1)]]/coefficients[index[(n-1)]][(n-1)];
+
+            for(int i = (n-2); i >= 0; i--){
+                double sum = eqRHS[index[i]];
+                for(int j = i+1; j < n; j++){
+                    sum = sum - coefficients[index[i]][j] * solutions[j];
+                }
+                solutions[i] = sum/coefficients[index[i]][i];
             }
-            solutions[i] = sum/coefficients[index[i]][i];
+        }catch(Exception x){//catch errors including divide by zero or matrix errors (mostly here "just in case")
+            System.out.println("There was an error processing the matrix! Problem in solution phase!");
+            System.out.println("Cause: " + x.getCause());
+            System.out.println(x.fillInStackTrace());
         }
-        
         return solutions;
     }
     
